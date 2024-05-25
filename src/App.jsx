@@ -1,5 +1,5 @@
-import { useReducer } from "react";
-import { v4 as uuid } from "uuid";
+import { useEffect, useReducer } from "react";
+// import { v4 as uuid } from "uuid";
 
 const initialState = {
   budget: 2000,
@@ -8,7 +8,6 @@ const initialState = {
   inputText: "",
   inputNumber: 0,
   expenseArray: [],
-  id: uuid(),
 };
 
 const reducerFun = (state, action) => {
@@ -20,13 +19,20 @@ const reducerFun = (state, action) => {
         spent: state.spent + state.inputNumber,
         inputNumber: "",
         inputText: "",
-        expenseArray: [
-          ...state.expenseArray,
-          { ...action.payload, id: uuid() },
-        ],
+        expenseArray: [...state.expenseArray, { ...action.payload }],
       };
     }
-
+    case "deleteExpense": {
+      let filter = state.expenseArray.filter(
+        (item) => item.id !== action.payload.id
+      );
+      return {
+        ...state,
+        expenseArray: [...filter],
+        remainigBudget: state.remainigBudget + action.payload.cost,
+        spent: state.spent - action.payload.cost,
+      };
+    }
     case "inputNumber": {
       return {
         ...state,
@@ -39,34 +45,25 @@ const reducerFun = (state, action) => {
         inputText: action.payload,
       };
     }
-    // case "loadState": {
-    //   return {
-    //     ...state,
-    //     ...action.payload,
-    //   };
-    // }
     default:
       return state;
   }
 };
 
-// const getItemFromLocalStorage = () => {
-//   const data = localStorage.getItem("expenses");
-//   if (data) {
-//     return JSON.parse(data);
-//   }
-//   return [];
-// };
 function App() {
-  const [state, dispatch] = useReducer(reducerFun, initialState);
+  const [state, dispatch] = useReducer(
+    reducerFun,
+    JSON.parse(localStorage.getItem("expenses")) || initialState
+  );
 
-  // useEffect(() => {
-  //   let addData = localStorage.setItem(
-  //     "expenses",
-  //     JSON.stringify(state.expenseArray)
-  //   );
-  //   console.log(addData);
-  // }, [state]);
+  useEffect(() => {
+    localStorage.setItem("expenses", JSON.stringify(state));
+  }, [state]);
+
+  const handleDelete = (id, cost) => {
+    // console.log(id, cost);
+    dispatch({ type: "deleteExpense", payload: { id, cost } });
+  };
 
   return (
     <div>
@@ -77,18 +74,18 @@ function App() {
       </div>
 
       <div className=" flex justify-around my-10">
-        <p className="border-2 p-5 text-xl rounded-lg">
+        <p className=" p-5 text-xl rounded-lg bg-[#fff] shadow-lg">
           Budget:{" "}
           <span className="text-green-500 font-bold">Rs {state.budget}</span>
         </p>
-        <p className="border-2 p-5 text-xl rounded-lg">
+        <p className="p-5 text-xl rounded-lg bg-[#fff] shadow-lg">
           Budget Remainig:{" "}
           <span className="text-[#38dbff] font-bold">
             Rs {state.remainigBudget}
           </span>
         </p>
 
-        <p className="border-2 p-5 text-xl rounded-lg">
+        <p className="p-5 text-xl rounded-lg bg-[#fff] shadow-lg">
           Spent so far:{" "}
           <span className="text-red-500 font-bold">Rs {state.spent}</span>
         </p>
@@ -96,10 +93,10 @@ function App() {
 
       <div className="flex gap-10 justify-center items-center w-[900px] m-auto">
         <div>
-          <p>Name</p>
+          <p className="font-semibold text-xl">Name</p>
           <input
             type="text"
-            className="border-2 w-[400px] p-2"
+            className="border-2 w-[400px] p-2 rounded-lg my-2"
             value={state.inputText}
             onChange={(e) =>
               dispatch({ type: "inputText", payload: e.target.value })
@@ -107,10 +104,10 @@ function App() {
           />
         </div>
         <div>
-          <p>Cost</p>
+          <p className="font-semibold text-xl">Cost</p>
           <input
             type="number"
-            className="border-2 w-[400px] p-2"
+            className="border-2 w-[400px] p-2 rounded-lg my-2"
             value={state.inputNumber}
             onChange={(e) =>
               dispatch({
@@ -128,10 +125,11 @@ function App() {
                 payload: {
                   name: state.inputText,
                   cost: parseInt(state.inputNumber),
+                  id: Date.now(),
                 },
               })
             }
-            className="border-2 p-2 w-[80px] mt-6"
+            className="border-2 p-2 w-[80px] mt-6 bg-[#1b8efa] rounded-lg text-white font-semibold hover:bg-[#6db5f8] hover:text-white"
           >
             Save
           </button>
@@ -152,13 +150,18 @@ function App() {
             </h1>
             {state.expenseArray.map((item) => {
               return (
-                <div className="my-8" key={item.name}>
-                  <div className="flex justify-between border-2 w-[65%] p-2 m-auto">
+                <div className="my-8 " key={item.name}>
+                  <div className="flex justify-between border-2 w-[65%] p-2 m-auto bg-[#fff] rounded-lg">
                     <h1>{item.name}</h1>
-                    <div className="flex gap-5 justify-center items-center">
+                    <div className="flex gap-3 justify-center items-center mr-5">
                       <h1>{item.cost}</h1>
                       <h1>{state.id}</h1>
-                      <p className="cursor-pointer">x</p>
+                      <p
+                        className="cursor-pointer"
+                        onClick={() => handleDelete(item.id, item.cost)}
+                      >
+                        x
+                      </p>
                     </div>
                   </div>
                 </div>

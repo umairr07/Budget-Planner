@@ -2,6 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* body {
-  background-color: #535353;
-} */
+body {
+  background-image: url("https://static.vecteezy.com/system/resources/thumbnails/007/169/676/small/diagonal-japanese-geometric-wave-style-abstract-overlapping-circle-wavy-line-shape-seamless-pattern-with-subtle-blue-color-background-free-vector.jpg");
+}
